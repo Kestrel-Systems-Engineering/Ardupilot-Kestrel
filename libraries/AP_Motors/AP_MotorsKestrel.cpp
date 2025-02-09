@@ -49,7 +49,9 @@ void AP_MotorsKestrel::init(motor_frame_class frame_class, motor_frame_type fram
     _has_vane_fore = SRV_Channels::function_assigned(SRV_Channel::k_motor5);
     _has_vane_left = SRV_Channels::function_assigned(SRV_Channel::k_motor6);
 
-    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_TRI_YAW), _yaw_servo_angle_max_deg*100);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_1), 100);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_2), 100);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_3), 100);
 
     // check for reverse tricopter
     _pitch_reversed = frame_type == MOTOR_FRAME_TYPE_PLUSREV;
@@ -57,7 +59,7 @@ void AP_MotorsKestrel::init(motor_frame_class frame_class, motor_frame_type fram
     _mav_type = MAV_TYPE_TRICOPTER;
 
     // record successful initialisation if what we setup was the desired frame_class
-    set_initialised_ok(frame_class == MOTOR_FRAME_TRI);
+    set_initialised_ok(frame_class == MOTOR_FRAME_KESTREL);
 }
 
 // set frame class (i.e. quad, hexa, heli) and type (i.e. x, plus)
@@ -66,7 +68,8 @@ void AP_MotorsKestrel::set_frame_class_and_type(motor_frame_class frame_class, m
     // check for reverse tricopter
     _pitch_reversed = frame_type == MOTOR_FRAME_TYPE_PLUSREV;
 
-    set_initialised_ok((frame_class == MOTOR_FRAME_TRI) && SRV_Channels::function_assigned(SRV_Channel::k_motor7));
+    set_initialised_ok((frame_class == MOTOR_FRAME_KESTREL) && SRV_Channels::function_assigned(SRV_Channel::k_motor4)
+     && SRV_Channels::function_assigned(SRV_Channel::k_motor5) && SRV_Channels::function_assigned(SRV_Channel::k_motor6));
 }
 
 // set update rate to motors - a value in hertz
@@ -93,23 +96,29 @@ void AP_MotorsKestrel::output_to_motors()
                     _actuator[AP_MOTORS_MOT_1+i] = 0;
                 }
             }
-            rc_write_angle(AP_MOTORS_CH_TRI_YAW, 0);
+            rc_write_angle(AP_MOTORS_CH_VN_1, 180);
+            rc_write_angle(AP_MOTORS_CH_VN_2, 180);
+            rc_write_angle(AP_MOTORS_CH_VN_3, 180);
             break;
         case SpoolState::GROUND_IDLE:
             // sends output to motors when armed but not flying
             set_actuator_with_slew(_actuator[AP_MOTORS_MOT_1], actuator_spin_up_to_ground_idle());
             set_actuator_with_slew(_actuator[AP_MOTORS_MOT_2], actuator_spin_up_to_ground_idle());
             set_actuator_with_slew(_actuator[AP_MOTORS_MOT_3], actuator_spin_up_to_ground_idle());
-            rc_write_angle(AP_MOTORS_CH_TRI_YAW, 0);
+            rc_write_angle(AP_MOTORS_CH_VN_1, 180*100);
+            rc_write_angle(AP_MOTORS_CH_VN_2, 180*100);
+            rc_write_angle(AP_MOTORS_CH_VN_3, 180*100);
             break;
         case SpoolState::SPOOLING_UP:
         case SpoolState::THROTTLE_UNLIMITED:
         case SpoolState::SPOOLING_DOWN:
             // set motor output based on thrust requests
             set_actuator_with_slew(_actuator[AP_MOTORS_MOT_1], thr_lin.thrust_to_actuator(_thrust_right));
-            set_actuator_with_slew(_actuator[AP_MOTORS_MOT_2], thr_lin.thrust_to_actuator(_thrust_left));
-            set_actuator_with_slew(_actuator[AP_MOTORS_MOT_3], thr_lin.thrust_to_actuator(_thrust_rear));
-            rc_write_angle(AP_MOTORS_CH_TRI_YAW, degrees(_pivot_angle)*100);
+            set_actuator_with_slew(_actuator[AP_MOTORS_MOT_2], thr_lin.thrust_to_actuator(_thrust_fore));
+            set_actuator_with_slew(_actuator[AP_MOTORS_MOT_3], thr_lin.thrust_to_actuator(_thrust_left));
+            rc_write_angle(AP_MOTORS_CH_VN_1, degrees(_vane_right)*100);
+            rc_write_angle(AP_MOTORS_CH_VN_2, degrees(_vane_fore)*100);
+            rc_write_angle(AP_MOTORS_CH_VN_3, degrees(_vane_left)*100);
             break;
     }
 
@@ -149,12 +158,16 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     float   rpy_high = 0.0f;            // highest motor value
     float   thr_adj;                    // the difference between the pilot's desired throttle and throttle_thrust_best_rpy
 
-    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_TRI_YAW), _yaw_servo_angle_max_deg*100);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_1), _yaw_servo_angle_max_deg*100);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_2), _yaw_servo_angle_max_deg*100);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_3), _yaw_servo_angle_max_deg*100);
 
     // sanity check YAW_SV_ANGLE parameter value to avoid divide by zero
     _yaw_servo_angle_max_deg.set(constrain_float(_yaw_servo_angle_max_deg, AP_MOTORS_TRI_SERVO_RANGE_DEG_MIN, AP_MOTORS_TRI_SERVO_RANGE_DEG_MAX));
 
     // apply voltage and air pressure compensation
+
+    // CHANGE HERE
     const float compensation_gain = thr_lin.get_compensation_gain();
     roll_thrust = (_roll_in + _roll_in_ff) * compensation_gain;
     pitch_thrust = (_pitch_in + _pitch_in_ff) * compensation_gain;
