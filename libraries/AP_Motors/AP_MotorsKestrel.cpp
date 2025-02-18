@@ -22,7 +22,7 @@
 
 #include "AP_MotorsKestrel.h"
 
-extern const AP_HAL::HAL& hal;
+extern const AP_HAL::HAL &hal;
 
 // init
 void AP_MotorsKestrel::init(motor_frame_class frame_class, motor_frame_type frame_type)
@@ -68,8 +68,7 @@ void AP_MotorsKestrel::set_frame_class_and_type(motor_frame_class frame_class, m
     // check for reverse tricopter
     _pitch_reversed = frame_type == MOTOR_FRAME_TYPE_PLUSREV;
 
-    set_initialised_ok((frame_class == MOTOR_FRAME_KESTREL) && SRV_Channels::function_assigned(SRV_Channel::k_motor4)
-     && SRV_Channels::function_assigned(SRV_Channel::k_motor5) && SRV_Channels::function_assigned(SRV_Channel::k_motor6));
+    set_initialised_ok((frame_class == MOTOR_FRAME_KESTREL) && SRV_Channels::function_assigned(SRV_Channel::k_motor4) && SRV_Channels::function_assigned(SRV_Channel::k_motor5) && SRV_Channels::function_assigned(SRV_Channel::k_motor6));
 }
 
 // set update rate to motors - a value in hertz
@@ -79,47 +78,50 @@ void AP_MotorsKestrel::set_update_rate(uint16_t speed_hz)
     _speed_hz = speed_hz;
 
     // set update rate for the 3 motors (but not the servo on channel 7)
-    uint32_t mask = 
-	    1U << AP_MOTORS_MOT_1 |
-	    1U << AP_MOTORS_MOT_2 |
-	    1U << AP_MOTORS_MOT_3;
+    uint32_t mask =
+        1U << AP_MOTORS_MOT_1 |
+        1U << AP_MOTORS_MOT_2 |
+        1U << AP_MOTORS_MOT_3;
     rc_set_freq(mask, _speed_hz);
 }
 
 void AP_MotorsKestrel::output_to_motors()
 {
-    switch (_spool_state) {
-        case SpoolState::SHUT_DOWN:
-            // sends minimum values out to the motors
-            for (uint8_t i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++) {
-                if (motor_enabled_mask(i)) {
-                    _actuator[AP_MOTORS_MOT_1+i] = 0;
-                }
+    switch (_spool_state)
+    {
+    case SpoolState::SHUT_DOWN:
+        // sends minimum values out to the motors
+        for (uint8_t i = 0; i < AP_MOTORS_MAX_NUM_MOTORS; i++)
+        {
+            if (motor_enabled_mask(i))
+            {
+                _actuator[AP_MOTORS_MOT_1 + i] = 0;
             }
-            rc_write_angle(AP_MOTORS_CH_VN_1, 180);
-            rc_write_angle(AP_MOTORS_CH_VN_2, 180);
-            rc_write_angle(AP_MOTORS_CH_VN_3, 180);
-            break;
-        case SpoolState::GROUND_IDLE:
-            // sends output to motors when armed but not flying
-            set_actuator_with_slew(_actuator[AP_MOTORS_MOT_1], actuator_spin_up_to_ground_idle());
-            set_actuator_with_slew(_actuator[AP_MOTORS_MOT_2], actuator_spin_up_to_ground_idle());
-            set_actuator_with_slew(_actuator[AP_MOTORS_MOT_3], actuator_spin_up_to_ground_idle());
-            rc_write_angle(AP_MOTORS_CH_VN_1, 180*100);
-            rc_write_angle(AP_MOTORS_CH_VN_2, 180*100);
-            rc_write_angle(AP_MOTORS_CH_VN_3, 180*100);
-            break;
-        case SpoolState::SPOOLING_UP:
-        case SpoolState::THROTTLE_UNLIMITED:
-        case SpoolState::SPOOLING_DOWN:
-            // set motor output based on thrust requests
-            set_actuator_with_slew(_actuator[AP_MOTORS_MOT_1], thr_lin.thrust_to_actuator(_thrust_right));
-            set_actuator_with_slew(_actuator[AP_MOTORS_MOT_2], thr_lin.thrust_to_actuator(_thrust_fore));
-            set_actuator_with_slew(_actuator[AP_MOTORS_MOT_3], thr_lin.thrust_to_actuator(_thrust_left));
-            rc_write_angle(AP_MOTORS_CH_VN_1, degrees(_vane_right)*100);
-            rc_write_angle(AP_MOTORS_CH_VN_2, degrees(_vane_fore)*100);
-            rc_write_angle(AP_MOTORS_CH_VN_3, degrees(_vane_left)*100);
-            break;
+        }
+        rc_write_angle(AP_MOTORS_CH_VN_1, 180);
+        rc_write_angle(AP_MOTORS_CH_VN_2, 180);
+        rc_write_angle(AP_MOTORS_CH_VN_3, 180);
+        break;
+    case SpoolState::GROUND_IDLE:
+        // sends output to motors when armed but not flying
+        set_actuator_with_slew(_actuator[AP_MOTORS_MOT_1], actuator_spin_up_to_ground_idle());
+        set_actuator_with_slew(_actuator[AP_MOTORS_MOT_2], actuator_spin_up_to_ground_idle());
+        set_actuator_with_slew(_actuator[AP_MOTORS_MOT_3], actuator_spin_up_to_ground_idle());
+        rc_write_angle(AP_MOTORS_CH_VN_1, 180 * 100);
+        rc_write_angle(AP_MOTORS_CH_VN_2, 180 * 100);
+        rc_write_angle(AP_MOTORS_CH_VN_3, 180 * 100);
+        break;
+    case SpoolState::SPOOLING_UP:
+    case SpoolState::THROTTLE_UNLIMITED:
+    case SpoolState::SPOOLING_DOWN:
+        // set motor output based on thrust requests
+        set_actuator_with_slew(_actuator[AP_MOTORS_MOT_1], thr_lin.thrust_to_actuator(_thrust_right));
+        set_actuator_with_slew(_actuator[AP_MOTORS_MOT_2], thr_lin.thrust_to_actuator(_thrust_fore));
+        set_actuator_with_slew(_actuator[AP_MOTORS_MOT_3], thr_lin.thrust_to_actuator(_thrust_left));
+        rc_write_angle(AP_MOTORS_CH_VN_1, degrees(_vane_right) * 100);
+        rc_write_angle(AP_MOTORS_CH_VN_2, degrees(_vane_fore) * 100);
+        rc_write_angle(AP_MOTORS_CH_VN_3, degrees(_vane_left) * 100);
+        break;
     }
 
     rc_write(AP_MOTORS_MOT_1, output_to_pwm(_actuator[AP_MOTORS_MOT_1]));
@@ -147,20 +149,20 @@ uint32_t AP_MotorsKestrel::get_motor_mask()
 // includes new scaling stability patch
 void AP_MotorsKestrel::output_armed_stabilizing()
 {
-    float   roll_thrust;                // roll thrust input value, +/- 1.0
-    float   pitch_thrust;               // pitch thrust input value, +/- 1.0
-    float   yaw_thrust;                 // yaw thrust input value, +/- 1.0
-    float   throttle_thrust;            // throttle thrust input value, 0.0 - 1.0
-    float   throttle_avg_max;           // throttle thrust average maximum value, 0.0 - 1.0
-    float   throttle_thrust_best_rpy;   // throttle providing maximum roll, pitch and yaw range without climbing
-    float   rpy_scale = 1.0f;           // this is used to scale the roll, pitch and yaw to fit within the motor limits
-    float   rpy_low = 0.0f;             // lowest motor value
-    float   rpy_high = 0.0f;            // highest motor value
-    float   thr_adj;                    // the difference between the pilot's desired throttle and throttle_thrust_best_rpy
+    float roll_thrust;              // roll thrust input value, +/- 1.0
+    float pitch_thrust;             // pitch thrust input value, +/- 1.0
+    float yaw_thrust;               // yaw thrust input value, +/- 1.0
+    float throttle_thrust;          // throttle thrust input value, 0.0 - 1.0
+    float throttle_avg_max;         // throttle thrust average maximum value, 0.0 - 1.0
+    float throttle_thrust_best_rpy; // throttle providing maximum roll, pitch and yaw range without climbing
+    float rpy_scale = 1.0f;         // this is used to scale the roll, pitch and yaw to fit within the motor limits
+    float rpy_low = 0.0f;           // lowest motor value
+    float rpy_high = 0.0f;          // highest motor value
+    float thr_adj;                  // the difference between the pilot's desired throttle and throttle_thrust_best_rpy
 
-    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_1), _yaw_servo_angle_max_deg*100);
-    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_2), _yaw_servo_angle_max_deg*100);
-    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_3), _yaw_servo_angle_max_deg*100);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_1), _yaw_servo_angle_max_deg * 100);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_2), _yaw_servo_angle_max_deg * 100);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_3), _yaw_servo_angle_max_deg * 100);
 
     // sanity check YAW_SV_ANGLE parameter value to avoid divide by zero
     _yaw_servo_angle_max_deg.set(constrain_float(_yaw_servo_angle_max_deg, AP_MOTORS_TRI_SERVO_RANGE_DEG_MIN, AP_MOTORS_TRI_SERVO_RANGE_DEG_MAX));
@@ -175,38 +177,42 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     throttle_thrust = get_throttle() * compensation_gain;
     throttle_avg_max = _throttle_avg_max * compensation_gain;
 
-    // check for reversed pitch
-    if (_pitch_reversed) {
-        pitch_thrust *= -1.0f;
+    yaw_thrust = yaw_thrust;
+
+    // Reverse anything needed here
+
+    // calculate angle of the vane servos
+    // REPLACE HERE WITH TORQUE CALC
+    _vane_right = (0.33) * safe_asin(throttle_thrust);
+    _vane_fore = (0.33) * safe_asin(throttle_thrust);
+    _vane_left = (0.33) * safe_asin(throttle_thrust);
+
+    // INCREASE TO CHECK THE LIMIT FOR ALL THREE SERVOS
+    if (fabsf(_vane_right) > radians(_yaw_servo_angle_max_deg))
+    {
+        limit.yaw = true;
+        _vane_right = constrain_float(_vane_right, -radians(_yaw_servo_angle_max_deg), radians(_yaw_servo_angle_max_deg));
     }
 
-    // VTOL plane may not have tail servo
-    if (!_have_tail_servo) {
-        _pivot_angle = 0.0;
-    } else {
-        // calculate angle of yaw pivot
-        _pivot_angle = safe_asin(yaw_thrust);
-        if (fabsf(_pivot_angle) > radians(_yaw_servo_angle_max_deg)) {
-            limit.yaw = true;
-            _pivot_angle = constrain_float(_pivot_angle, -radians(_yaw_servo_angle_max_deg), radians(_yaw_servo_angle_max_deg));
-        }
-    }
-
-    float pivot_thrust_max = cosf(_pivot_angle);
+    float pivot_thrust_max = cosf(_vane_right);
     float thrust_max = 1.0f;
 
     // sanity check throttle is above zero and below current limited throttle
-    if (throttle_thrust <= 0.0f) {
+    if (throttle_thrust <= 0.0f)
+    {
         throttle_thrust = 0.0f;
         limit.throttle_lower = true;
     }
-    if (throttle_thrust >= _throttle_thrust_max) {
+    if (throttle_thrust >= _throttle_thrust_max)
+    {
         throttle_thrust = _throttle_thrust_max;
         limit.throttle_upper = true;
     }
 
     throttle_avg_max = constrain_float(throttle_avg_max, throttle_thrust, _throttle_thrust_max);
 
+
+    // FIX ALL OF THIS 
     // The following mix may be offer less coupling between axis but needs testing
     //_thrust_right = roll_thrust * -0.5f + pitch_thrust * 1.0f;
     //_thrust_left = roll_thrust * 0.5f + pitch_thrust * 1.0f;
@@ -214,7 +220,7 @@ void AP_MotorsKestrel::output_armed_stabilizing()
 
     _thrust_right = roll_thrust * -0.5f + pitch_thrust * 0.5f;
     _thrust_left = roll_thrust * 0.5f + pitch_thrust * 0.5f;
-    _thrust_rear = pitch_thrust * -0.5f;
+    _thrust_fore = pitch_thrust * -0.5f;
 
     // calculate roll and pitch for each motor
     // set rpy_low and rpy_high to the lowest and highest values of the motors
@@ -222,13 +228,15 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     // record lowest roll pitch command
     rpy_low = MIN(_thrust_right, _thrust_left);
     rpy_high = MAX(_thrust_right, _thrust_left);
-    if (rpy_low > _thrust_rear) {
-        rpy_low = _thrust_rear;
+    if (rpy_low > _thrust_fore)
+    {
+        rpy_low = _thrust_fore;
     }
     // check to see if the rear motor will reach maximum thrust before the front two motors
-    if ((1.0f - rpy_high) > (pivot_thrust_max - _thrust_rear)) {
+    if ((1.0f - rpy_high) > (pivot_thrust_max - _thrust_fore))
+    {
         thrust_max = pivot_thrust_max;
-        rpy_high = _thrust_rear;
+        rpy_high = _thrust_fore;
     }
 
     // calculate throttle that gives most possible room for yaw (range 1000 ~ 2000) which is the lower of:
@@ -243,27 +251,37 @@ void AP_MotorsKestrel::output_armed_stabilizing()
 
     // check everything fits
     throttle_thrust_best_rpy = MIN(0.5f * thrust_max - (rpy_low + rpy_high) / 2.0, throttle_avg_max);
-    if (is_zero(rpy_low)) {
+    if (is_zero(rpy_low))
+    {
         rpy_scale = 1.0f;
-    } else {
+    }
+    else
+    {
         rpy_scale = constrain_float(-throttle_thrust_best_rpy / rpy_low, 0.0f, 1.0f);
     }
 
     // calculate how close the motors can come to the desired throttle
     thr_adj = throttle_thrust - throttle_thrust_best_rpy;
-    if (rpy_scale < 1.0f) {
+    if (rpy_scale < 1.0f)
+    {
         // Full range is being used by roll, pitch, and yaw.
         limit.roll = true;
         limit.pitch = true;
-        if (thr_adj > 0.0f) {
+        if (thr_adj > 0.0f)
+        {
             limit.throttle_upper = true;
         }
         thr_adj = 0.0f;
-    } else {
-        if (thr_adj < -(throttle_thrust_best_rpy + rpy_low)) {
+    }
+    else
+    {
+        if (thr_adj < -(throttle_thrust_best_rpy + rpy_low))
+        {
             // Throttle can't be reduced to desired value
             thr_adj = -(throttle_thrust_best_rpy + rpy_low);
-        } else if (thr_adj > thrust_max - (throttle_thrust_best_rpy + rpy_high)) {
+        }
+        else if (thr_adj > thrust_max - (throttle_thrust_best_rpy + rpy_high))
+        {
             // Throttle can't be increased to desired value
             thr_adj = thrust_max - (throttle_thrust_best_rpy + rpy_high);
             limit.throttle_upper = true;
@@ -278,17 +296,19 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     // add scaled roll, pitch, constrained yaw and throttle for each motor
     _thrust_right = throttle_thrust_best_plus_adj + rpy_scale * _thrust_right;
     _thrust_left = throttle_thrust_best_plus_adj + rpy_scale * _thrust_left;
-    _thrust_rear = throttle_thrust_best_plus_adj + rpy_scale * _thrust_rear;
+    _thrust_fore = throttle_thrust_best_plus_adj + rpy_scale * _thrust_fore;
 
+
+    // NEED SOMETHING HERE
     // scale pivot thrust to account for pivot angle
     // we should not need to check for divide by zero as _pivot_angle is constrained to the 5deg ~ 80 deg range
-    _thrust_rear = _thrust_rear / cosf(_pivot_angle);
+    // _thrust_fore = _thrust_rear / cosf(_pivot_angle);
 
     // constrain all outputs to 0.0f to 1.0f
     // test code should be run with these lines commented out as they should not do anything
     _thrust_right = constrain_float(_thrust_right, 0.0f, 1.0f);
     _thrust_left = constrain_float(_thrust_left, 0.0f, 1.0f);
-    _thrust_rear = constrain_float(_thrust_rear, 0.0f, 1.0f);
+    _thrust_fore = constrain_float(_thrust_fore, 0.0f, 1.0f);
 }
 
 // output_test_seq - spin a motor at the pwm value specified
@@ -297,50 +317,27 @@ void AP_MotorsKestrel::output_armed_stabilizing()
 void AP_MotorsKestrel::_output_test_seq(uint8_t motor_seq, int16_t pwm)
 {
     // output to motors and servos
-    if (!_pitch_reversed) {
-        switch (motor_seq) {
-        case 1:
-            // front right motor
-            rc_write(AP_MOTORS_MOT_1, pwm);
-            break;
-        case 2:
-            // back motor
-            rc_write(AP_MOTORS_MOT_3, pwm);
-            break;
-        case 3:
-            // back servo
-            rc_write(AP_MOTORS_CH_TRI_YAW, pwm);
-            break;
-        case 4:
-            // front left motor
-            rc_write(AP_MOTORS_MOT_2, pwm);
-            break;
-        default:
-            // do nothing
-            break;
-        }
-    } else {
-        switch (motor_seq) {
-        case 1:
-            // front motor
-            rc_write(AP_MOTORS_MOT_3, pwm);
-            break;
-        case 2:
-            // front servo
-            rc_write(AP_MOTORS_CH_TRI_YAW, pwm);
-            break;
-        case 3:
-            // back right motor
-            rc_write(AP_MOTORS_MOT_1, pwm);
-            break;
-        case 4:
-            // back left motor
-            rc_write(AP_MOTORS_MOT_2, pwm);
-            break;
-        default:
-            // do nothing
-            break;
-        }
+    switch (motor_seq)
+    {
+    case 1:
+        // back right motor
+        rc_write(AP_MOTORS_MOT_1, pwm);
+        break;
+    case 2:
+        // front motor
+        rc_write(AP_MOTORS_MOT_2, pwm);
+        break;
+    case 3:
+        // back left motor
+        rc_write(AP_MOTORS_MOT_3, pwm);
+        break;
+    case 4:
+        // all servos
+        rc_write(AP_MOTORS_CH_VN_1, pwm);
+        break;
+    default:
+        // do nothing
+        break;
     }
 }
 
@@ -351,17 +348,19 @@ void AP_MotorsKestrel::_output_test_seq(uint8_t motor_seq, int16_t pwm)
 */
 void AP_MotorsKestrel::thrust_compensation(void)
 {
-    if (_thrust_compensation_callback) {
+    if (_thrust_compensation_callback)
+    {
         // convert 3 thrust values into an array indexed by motor number
-        float thrust[4] { _thrust_right, _thrust_left, 0, _thrust_rear };
+        float thrust[4]{_thrust_right, _thrust_fore, _thrust_left, 0};
 
         // apply vehicle supplied compensation function
         _thrust_compensation_callback(thrust, 4);
 
         // extract compensated thrust values
         _thrust_right = thrust[0];
-        _thrust_left = thrust[1];
-        _thrust_rear = thrust[3];
+        _thrust_fore = thrust[1];
+        _thrust_left = thrust[2];
+        
     }
 }
 
@@ -374,22 +373,25 @@ void AP_MotorsKestrel::output_motor_mask(float thrust, uint32_t mask, float rudd
     AP_MotorsMulticopter::output_motor_mask(thrust, mask, rudder_dt);
 
     // and override yaw servo
-    rc_write_angle(AP_MOTORS_CH_TRI_YAW, 0);
+    rc_write_angle(AP_MOTORS_CH_VN_1, 0);
+    rc_write_angle(AP_MOTORS_CH_VN_2, 0);
+    rc_write_angle(AP_MOTORS_CH_VN_3, 0);
 }
 
 float AP_MotorsKestrel::get_roll_factor(uint8_t i)
 {
     float ret = 0.0f;
 
-    switch (i) {
-        // right motor
-        case AP_MOTORS_MOT_1:
-            ret = -1.0f;
-            break;
-            // left motor
-        case AP_MOTORS_MOT_2:
-            ret = 1.0f;
-            break;
+    switch (i)
+    {
+    // right motor
+    case AP_MOTORS_MOT_1:
+        ret = -1.0f;
+        break;
+        // left motor
+    case AP_MOTORS_MOT_3:
+        ret = 1.0f;
+        break;
     }
 
     return ret;
@@ -401,7 +403,8 @@ float AP_MotorsKestrel::get_pitch_factor_json(uint8_t i)
 {
     float ret = 0.0f;
 
-    switch (i) {
+    switch (i)
+    {
     case AP_MOTORS_MOT_1: // front motors
     case AP_MOTORS_MOT_2:
         ret = 0.5f;
@@ -411,7 +414,8 @@ float AP_MotorsKestrel::get_pitch_factor_json(uint8_t i)
         break;
     }
 
-    if (_pitch_reversed) {
+    if (_pitch_reversed)
+    {
         ret *= -1.0f;
     }
 
@@ -424,7 +428,8 @@ bool AP_MotorsKestrel::arming_checks(size_t buflen, char *buffer) const
 {
 #if !APM_BUILD_TYPE(APM_BUILD_ArduPlane) // Tilt Rotors do not need a yaw servo
     // Check for yaw servo
-    if (!_have_tail_servo) {
+    if (!_have_tail_servo)
+    {
         hal.util->snprintf(buffer, buflen, "no SERVOx_FUNCTION set to Motor7 for tail servo");
         return false;
     }
@@ -439,8 +444,10 @@ bool AP_MotorsKestrel::arming_checks(size_t buflen, char *buffer) const
 // Get the testing order for the motors
 uint8_t AP_MotorsKestrel::get_motor_test_order(uint8_t i)
 {
-    if (!_pitch_reversed) {
-        switch (i) {
+    if (!_pitch_reversed)
+    {
+        switch (i)
+        {
         case AP_MOTORS_MOT_1: // front right motor
             return 1;
         case AP_MOTORS_MOT_3: // back motor
@@ -452,8 +459,11 @@ uint8_t AP_MotorsKestrel::get_motor_test_order(uint8_t i)
         default:
             return 0;
         }
-    } else {
-        switch (i) {
+    }
+    else
+    {
+        switch (i)
+        {
         case AP_MOTORS_MOT_3: // front motor
             return 1;
         case AP_MOTORS_CH_TRI_YAW: // front servo

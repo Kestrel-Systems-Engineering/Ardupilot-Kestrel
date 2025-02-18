@@ -1,5 +1,5 @@
 /// @file	AP_MotorsKestrel.h
-/// @brief	Motor control class for Tricopters
+/// @brief	Motor control class for the Kestrel
 #pragma once
 
 #include <AP_Common/AP_Common.h>
@@ -66,7 +66,7 @@ protected:
     // call vehicle supplied thrust compensation if set
     void                thrust_compensation(void) override;
 
-    const char* _get_frame_string() const override { return "TRI"; }
+    const char* _get_frame_string() const override { return "KES"; }
     const char*  get_type_string() const override { return _pitch_reversed ? "pitch-reversed" : ""; }
 
     // output_test_seq - spin a motor at the pwm value specified
@@ -90,5 +90,7 @@ protected:
     bool _has_vane_right;
     bool _has_vane_fore;
     bool _has_vane_left;
+
+    bool _have_tail_servo = true;
 
 };
