@@ -45,9 +45,9 @@ void AP_MotorsKestrel::init(motor_frame_class frame_class, motor_frame_type fram
     add_motor_num(AP_MOTORS_CH_VN_3);
 
     // Check for tail servo
-    _has_vane_right = SRV_Channels::function_assigned(SRV_Channel::k_motor4);
-    _has_vane_fore = SRV_Channels::function_assigned(SRV_Channel::k_motor5);
-    _has_vane_left = SRV_Channels::function_assigned(SRV_Channel::k_motor6);
+    _has_vane_right = SRV_Channels::function_assigned(SRV_Channel::k_motor6);
+    _has_vane_fore = SRV_Channels::function_assigned(SRV_Channel::k_motor7);
+    _has_vane_left = SRV_Channels::function_assigned(SRV_Channel::k_motor8);
 
     SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_1), 100);
     SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_2), 100);
@@ -165,7 +165,7 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_3), _yaw_servo_angle_max_deg * 100);
 
     // sanity check YAW_SV_ANGLE parameter value to avoid divide by zero
-    _yaw_servo_angle_max_deg.set(constrain_float(_yaw_servo_angle_max_deg, AP_MOTORS_TRI_SERVO_RANGE_DEG_MIN, AP_MOTORS_TRI_SERVO_RANGE_DEG_MAX));
+    _yaw_servo_angle_max_deg.set(constrain_float(_yaw_servo_angle_max_deg, AP_MOTORS_KES_SERVO_RANGE_DEG_MIN, AP_MOTORS_KES_SERVO_RANGE_DEG_MAX));
 
     // apply voltage and air pressure compensation
 

@@ -386,6 +386,10 @@ void Copter::allocate_motors(void)
             motors = NEW_NOTHROW AP_MotorsTailsitter(copter.scheduler.get_loop_rate_hz());
             motors_var_info = AP_MotorsTailsitter::var_info;
             break;
+        case AP_Motors::MOTOR_FRAME_KESTREL:
+            motors = NEW_NOTHROW AP_MotorsKestrel(copter.scheduler.get_loop_rate_hz());
+            motors_var_info = AP_MotorsKestrel::var_info;
+            break;
         case AP_Motors::MOTOR_FRAME_6DOF_SCRIPTING:
 #if AP_SCRIPTING_ENABLED
             motors = NEW_NOTHROW AP_MotorsMatrix_6DoF_Scripting(copter.scheduler.get_loop_rate_hz());

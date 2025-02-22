@@ -11,8 +11,8 @@
 #define AP_MOTORS_CH_VN_2   CH_5
 #define AP_MOTORS_CH_VN_3   CH_6
 
-#define AP_MOTORS_TRI_SERVO_RANGE_DEG_MIN   20   // minimum angle movement of vane servos in degrees
-#define AP_MOTORS_TRI_SERVO_RANGE_DEG_MAX   200  // maximum angle movement of vane servos in degrees
+#define AP_MOTORS_KES_SERVO_RANGE_DEG_MIN   20   // minimum angle movement of vane servos in degrees
+#define AP_MOTORS_KES_SERVO_RANGE_DEG_MAX   200  // maximum angle movement of vane servos in degrees
 
 /// @class      AP_MotorsKestrel
 class AP_MotorsKestrel : public AP_MotorsMulticopter {
@@ -25,7 +25,7 @@ public:
     };
 
     // init
-    void                init(motor_frame_class frame_class, motor_frame_type frame_type) override;
+    void init(motor_frame_class frame_class, motor_frame_type frame_type) override;
 
     // set frame class (i.e. quad, hexa, heli) and type (i.e. x, plus)
     void set_frame_class_and_type(motor_frame_class frame_class, motor_frame_type frame_type) override;
