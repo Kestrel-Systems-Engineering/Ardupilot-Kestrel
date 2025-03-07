@@ -6,10 +6,10 @@
 #include <AP_Math/AP_Math.h>        // ArduPilot Mega Vector/Matrix math Library
 #include "AP_MotorsMulticopter.h"
 
-// vane servos use channels 4, 5, and 6
-#define AP_MOTORS_CH_VN_1   CH_4
-#define AP_MOTORS_CH_VN_2   CH_5
-#define AP_MOTORS_CH_VN_3   CH_6
+// vane servos use channels 5, 6, and 7
+#define AP_MOTORS_CH_VN_1   CH_5
+#define AP_MOTORS_CH_VN_2   CH_6
+#define AP_MOTORS_CH_VN_3   CH_7
 
 #define AP_MOTORS_KES_SERVO_RANGE_DEG_MIN   20   // minimum angle movement of vane servos in degrees
 #define AP_MOTORS_KES_SERVO_RANGE_DEG_MAX   200  // maximum angle movement of vane servos in degrees
@@ -59,6 +59,8 @@ public:
     // Get the testing order for the motors, this is used for AP_Motors_test
     uint8_t get_motor_test_order(uint8_t i);
 
+    static const struct AP_Param::GroupInfo var_info[];
+
 protected:
     // output - sends commands to the motors
     void                output_armed_stabilizing() override;
@@ -92,5 +94,13 @@ protected:
     bool _has_vane_left;
 
     bool _have_tail_servo = true;
+
+    // Kestrel Stuff
+    AP_Int8 kes_vane_bias;
+    AP_Float kes_vane_max_angle;
+
+    AP_Int16 vane_left_offset;
+    AP_Int16 vane_fore_offset;
+    AP_Int16 vane_right_offset;
 
 };

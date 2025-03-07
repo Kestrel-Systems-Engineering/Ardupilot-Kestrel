@@ -24,6 +24,47 @@
 
 extern const AP_HAL::HAL &hal;
 
+// parameters for the motor class
+const AP_Param::GroupInfo AP_MotorsKestrel::var_info[] = {
+    // @Param: KES_VANE_BIAS
+    // @DisplayName: Kestrel Vane Bias
+    // @Description: The primary direction that the Kestrel should expect to lean it's vanes in order to counterattack torque while at a hover
+    // @User: Standard
+    // @Values: 0:Left_Bias,1:Right_Bias
+    AP_GROUPINFO("KES_VANE_BIAS", 0, AP_MotorsKestrel, kes_vane_bias, 1),
+
+    // @Param: KES_VANE_MAX_ANGLE
+    // @DisplayName: Kestrel Vane Max Angle
+    // @Description: The maximum angle in degrees that the vane can lean to at a maximum without breaking mechanisms
+    // @User: Standard
+    // @Range: 0 90
+    AP_GROUPINFO("KES_VANE_MAX_ANGLE", 1, AP_MotorsKestrel, kes_vane_max_angle, 25),
+
+    // @Param: KES_VANE_LEFT_OFFSET
+    // @DisplayName: Kestrel Left Vane Offset
+    // @Description: The PWM signal that makes the left vane servo reach a zero deflection state
+    // @User: Standard
+    // @Range: 0 3000
+    AP_GROUPINFO("KES_VANE_LEFT_OFFSET", 2, AP_MotorsKestrel, vane_left_offset, 1900),
+
+    // @Param: KES_VANE_FORE_OFFSET
+    // @DisplayName: Kestrel Forward Vane Offset
+    // @Description: The PWM signal that makes the forward vane servo reach a zero deflection state
+    // @User: Standard
+    // @Range: 0 3000
+    AP_GROUPINFO("KES_VANE_FORE_OFFSET", 3, AP_MotorsKestrel, vane_fore_offset, 1900),
+
+    // @Param: KES_VANE_RIGHT_OFFSET
+    // @DisplayName: Kestrel Right Vane Offset
+    // @Description: The PWM signal that makes the right vane servo reach a zero deflection state
+    // @User: Standard
+    // @Range: 0 3000
+    AP_GROUPINFO("KES_VANE_RIGHT_OFFSET", 2, AP_MotorsKestrel, vane_right_offset, 1900),
+
+    AP_GROUPEND
+};
+
+
 // init
 void AP_MotorsKestrel::init(motor_frame_class frame_class, motor_frame_type frame_type)
 {
@@ -45,13 +86,13 @@ void AP_MotorsKestrel::init(motor_frame_class frame_class, motor_frame_type fram
     add_motor_num(AP_MOTORS_CH_VN_3);
 
     // Check for tail servo
-    _has_vane_right = SRV_Channels::function_assigned(SRV_Channel::k_motor6);
-    _has_vane_fore = SRV_Channels::function_assigned(SRV_Channel::k_motor7);
-    _has_vane_left = SRV_Channels::function_assigned(SRV_Channel::k_motor8);
+    _has_vane_right = SRV_Channels::function_assigned(SRV_Channel::k_motor5);
+    _has_vane_fore = SRV_Channels::function_assigned(SRV_Channel::k_motor6);
+    _has_vane_left = SRV_Channels::function_assigned(SRV_Channel::k_motor7);
 
-    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_1), 100);
-    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_2), 100);
-    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_3), 100);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_1), 1600);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_2), 1600);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_3), 1600);
 
     // check for reverse tricopter
     _pitch_reversed = frame_type == MOTOR_FRAME_TYPE_PLUSREV;
@@ -68,7 +109,7 @@ void AP_MotorsKestrel::set_frame_class_and_type(motor_frame_class frame_class, m
     // check for reverse tricopter
     _pitch_reversed = frame_type == MOTOR_FRAME_TYPE_PLUSREV;
 
-    set_initialised_ok((frame_class == MOTOR_FRAME_KESTREL) && SRV_Channels::function_assigned(SRV_Channel::k_motor4) && SRV_Channels::function_assigned(SRV_Channel::k_motor5) && SRV_Channels::function_assigned(SRV_Channel::k_motor6));
+    set_initialised_ok((frame_class == MOTOR_FRAME_KESTREL) && SRV_Channels::function_assigned(SRV_Channel::k_motor5) && SRV_Channels::function_assigned(SRV_Channel::k_motor6) && SRV_Channels::function_assigned(SRV_Channel::k_motor7));
 }
 
 // set update rate to motors - a value in hertz
@@ -98,18 +139,18 @@ void AP_MotorsKestrel::output_to_motors()
                 _actuator[AP_MOTORS_MOT_1 + i] = 0;
             }
         }
-        rc_write_angle(AP_MOTORS_CH_VN_1, 180);
-        rc_write_angle(AP_MOTORS_CH_VN_2, 180);
-        rc_write_angle(AP_MOTORS_CH_VN_3, 180);
+        rc_write_angle(AP_MOTORS_CH_VN_1, 1900);
+        rc_write_angle(AP_MOTORS_CH_VN_2, 1900);
+        rc_write_angle(AP_MOTORS_CH_VN_3, 1900);
         break;
     case SpoolState::GROUND_IDLE:
         // sends output to motors when armed but not flying
         set_actuator_with_slew(_actuator[AP_MOTORS_MOT_1], actuator_spin_up_to_ground_idle());
         set_actuator_with_slew(_actuator[AP_MOTORS_MOT_2], actuator_spin_up_to_ground_idle());
         set_actuator_with_slew(_actuator[AP_MOTORS_MOT_3], actuator_spin_up_to_ground_idle());
-        rc_write_angle(AP_MOTORS_CH_VN_1, 180 * 100);
-        rc_write_angle(AP_MOTORS_CH_VN_2, 180 * 100);
-        rc_write_angle(AP_MOTORS_CH_VN_3, 180 * 100);
+        rc_write_angle(AP_MOTORS_CH_VN_1, 1900);
+        rc_write_angle(AP_MOTORS_CH_VN_2, 1900);
+        rc_write_angle(AP_MOTORS_CH_VN_3, 1900);
         break;
     case SpoolState::SPOOLING_UP:
     case SpoolState::THROTTLE_UNLIMITED:
@@ -133,7 +174,7 @@ void AP_MotorsKestrel::output_to_motors()
 //  this can be used to ensure other pwm outputs (i.e. for servos) do not conflict
 uint32_t AP_MotorsKestrel::get_motor_mask()
 {
-    // tri copter uses channels 1,2,4 and 7
+    // Kestrel uses channels 1,2,3, and 5, 6, 7
     uint32_t motor_mask = (1U << AP_MOTORS_MOT_1) |
                           (1U << AP_MOTORS_MOT_2) |
                           (1U << AP_MOTORS_MOT_3);
@@ -160,9 +201,9 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     float rpy_high = 0.0f;          // highest motor value
     float thr_adj;                  // the difference between the pilot's desired throttle and throttle_thrust_best_rpy
 
-    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_1), _yaw_servo_angle_max_deg * 100);
-    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_2), _yaw_servo_angle_max_deg * 100);
-    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_3), _yaw_servo_angle_max_deg * 100);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_1), vane_left_offset);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_2), vane_fore_offset);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_3), vane_right_offset);
 
     // sanity check YAW_SV_ANGLE parameter value to avoid divide by zero
     _yaw_servo_angle_max_deg.set(constrain_float(_yaw_servo_angle_max_deg, AP_MOTORS_KES_SERVO_RANGE_DEG_MIN, AP_MOTORS_KES_SERVO_RANGE_DEG_MAX));
@@ -183,9 +224,13 @@ void AP_MotorsKestrel::output_armed_stabilizing()
 
     // calculate angle of the vane servos
     // REPLACE HERE WITH TORQUE CALC
-    _vane_right = (0.33) * safe_asin(throttle_thrust);
-    _vane_fore = (0.33) * safe_asin(throttle_thrust);
-    _vane_left = (0.33) * safe_asin(throttle_thrust);
+
+    int bias_dir = kes_vane_bias ? -1 : 1;
+
+    _vane_left = vane_left_offset + (bias_dir * kes_vane_max_angle * safe_asin(throttle_thrust));
+    _vane_fore = vane_fore_offset + (bias_dir * kes_vane_max_angle * safe_asin(throttle_thrust));
+    _vane_right = vane_right_offset + (bias_dir * kes_vane_max_angle* safe_asin(throttle_thrust));
+
 
     // INCREASE TO CHECK THE LIMIT FOR ALL THREE SERVOS
     if (fabsf(_vane_right) > radians(_yaw_servo_angle_max_deg))
@@ -194,7 +239,7 @@ void AP_MotorsKestrel::output_armed_stabilizing()
         _vane_right = constrain_float(_vane_right, -radians(_yaw_servo_angle_max_deg), radians(_yaw_servo_angle_max_deg));
     }
 
-    float pivot_thrust_max = cosf(_vane_right);
+    // float pivot_thrust_max = cosf(_vane_right);
     float thrust_max = 1.0f;
 
     // sanity check throttle is above zero and below current limited throttle
@@ -218,9 +263,9 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     //_thrust_left = roll_thrust * 0.5f + pitch_thrust * 1.0f;
     //_thrust_rear = 0;
 
-    _thrust_right = roll_thrust * -0.5f + pitch_thrust * 0.5f;
-    _thrust_left = roll_thrust * 0.5f + pitch_thrust * 0.5f;
-    _thrust_fore = pitch_thrust * -0.5f;
+    _thrust_right = roll_thrust * -0.5f - pitch_thrust * 0.25f;
+    _thrust_left = roll_thrust * 0.5f - pitch_thrust * 0.25f;
+    _thrust_fore = pitch_thrust * 0.5f;
 
     // calculate roll and pitch for each motor
     // set rpy_low and rpy_high to the lowest and highest values of the motors
@@ -232,10 +277,8 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     {
         rpy_low = _thrust_fore;
     }
-    // check to see if the rear motor will reach maximum thrust before the front two motors
-    if ((1.0f - rpy_high) > (pivot_thrust_max - _thrust_fore))
+    if (rpy_high < _thrust_fore)
     {
-        thrust_max = pivot_thrust_max;
         rpy_high = _thrust_fore;
     }
 
