@@ -227,17 +227,18 @@ void AP_MotorsKestrel::output_armed_stabilizing()
 
     // int bias_dir = kes_vane_bias ? -1 : 1;
 
-    _vane_left = /*vane_left_offset + (bias_dir * kes_vane_max_angle **/ safe_asin(throttle_thrust);
-    _vane_fore = /*vane_fore_offset + (bias_dir * kes_vane_max_angle **/ safe_asin(throttle_thrust);
-    _vane_right = /*vane_right_offset + (bias_dir * kes_vane_max_angle**/ safe_asin(throttle_thrust);
+    // _vane_left = /*vane_left_offset + (bias_dir * kes_vane_max_angle **/ safe_asin(throttle_thrust);
 
+    _vane_left = vn_l_offset + vn_l_center + (yaw_thrust * vn_l_gain);
+    _vane_fore = vn_f_offset + vn_f_center + (yaw_thrust * vn_f_gain);
+    _vane_right = vn_r_offset + vn_r_center + (yaw_thrust * vn_r_gain);
 
     // INCREASE TO CHECK THE LIMIT FOR ALL THREE SERVOS
-    if (fabsf(_vane_right) > radians(_yaw_servo_angle_max_deg))
-    {
-        limit.yaw = true;
-        _vane_right = constrain_float(_vane_right, -radians(_yaw_servo_angle_max_deg), radians(_yaw_servo_angle_max_deg));
-    }
+    // if (fabsf(_vane_right) > radians(_yaw_servo_angle_max_deg))
+    // {
+    //     limit.yaw = true;
+    //     _vane_right = constrain_float(_vane_right, -radians(_yaw_servo_angle_max_deg), radians(_yaw_servo_angle_max_deg));
+    // }
 
     // float pivot_thrust_max = cosf(_vane_right);
     float thrust_max = 1.0f;
