@@ -139,29 +139,32 @@ void AP_MotorsKestrel::output_to_motors()
                 _actuator[AP_MOTORS_MOT_1 + i] = 0;
             }
         }
-        rc_write_angle(AP_MOTORS_CH_VN_1, 1900);
-        rc_write_angle(AP_MOTORS_CH_VN_2, 1900);
-        rc_write_angle(AP_MOTORS_CH_VN_3, 1900);
+        rc_write_angle(AP_MOTORS_CH_VN_1, vn_l_center);
+        rc_write_angle(AP_MOTORS_CH_VN_2, vn_f_center);
+        rc_write_angle(AP_MOTORS_CH_VN_3, vn_r_center);
         break;
     case SpoolState::GROUND_IDLE:
         // sends output to motors when armed but not flying
         set_actuator_with_slew(_actuator[AP_MOTORS_MOT_1], actuator_spin_up_to_ground_idle());
         set_actuator_with_slew(_actuator[AP_MOTORS_MOT_2], actuator_spin_up_to_ground_idle());
         set_actuator_with_slew(_actuator[AP_MOTORS_MOT_3], actuator_spin_up_to_ground_idle());
-        rc_write_angle(AP_MOTORS_CH_VN_1, 1900);
-        rc_write_angle(AP_MOTORS_CH_VN_2, 1900);
-        rc_write_angle(AP_MOTORS_CH_VN_3, 1900);
+        rc_write_angle(AP_MOTORS_CH_VN_1, vn_l_center);
+        rc_write_angle(AP_MOTORS_CH_VN_2, vn_f_center);
+        rc_write_angle(AP_MOTORS_CH_VN_3, vn_r_center);
         break;
     case SpoolState::SPOOLING_UP:
     case SpoolState::THROTTLE_UNLIMITED:
     case SpoolState::SPOOLING_DOWN:
         // set motor output based on thrust requests
-        set_actuator_with_slew(_actuator[AP_MOTORS_MOT_1], thr_lin.thrust_to_actuator(_thrust_right));
+        set_actuator_with_slew(_actuator[AP_MOTORS_MOT_1], thr_lin.thrust_to_actuator(_thrust_left));
         set_actuator_with_slew(_actuator[AP_MOTORS_MOT_2], thr_lin.thrust_to_actuator(_thrust_fore));
-        set_actuator_with_slew(_actuator[AP_MOTORS_MOT_3], thr_lin.thrust_to_actuator(_thrust_left));
-        rc_write_angle(AP_MOTORS_CH_VN_1, degrees(_vane_right) * 100);
-        rc_write_angle(AP_MOTORS_CH_VN_2, degrees(_vane_fore) * 100);
-        rc_write_angle(AP_MOTORS_CH_VN_3, degrees(_vane_left) * 100);
+        set_actuator_with_slew(_actuator[AP_MOTORS_MOT_3], thr_lin.thrust_to_actuator(_thrust_right));
+        // rc_write_angle(AP_MOTORS_CH_VN_1, /*degrees(_vane_right) * 100*/_vane_left);
+        // rc_write_angle(AP_MOTORS_CH_VN_2, /*degrees(_vane_fore) * 100*/_vane_fore);
+        // rc_write_angle(AP_MOTORS_CH_VN_3, /*degrees(_vane_left) * 100*/_vane_right);
+        rc_write(AP_MOTORS_CH_VN_1, /*degrees(_vane_right) * 100*/_vane_left);
+        rc_write(AP_MOTORS_CH_VN_2, /*degrees(_vane_fore) * 100*/_vane_fore);
+        rc_write(AP_MOTORS_CH_VN_3, /*degrees(_vane_left) * 100*/_vane_right);
         break;
     }
 
@@ -201,9 +204,9 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     float rpy_high = 0.0f;          // highest motor value
     float thr_adj;                  // the difference between the pilot's desired throttle and throttle_thrust_best_rpy
 
-    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_1), /*vane_left_offset*/ 1900);
-    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_2), /*vane_fore_offset*/1900);
-    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_3), /*vane_right_offset*/ 1900);
+    // SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_1), /*vane_left_offset*/ 1900);
+    // SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_2), /*vane_fore_offset*/1900);
+    // SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_3), /*vane_right_offset*/ 1900);
 
     // sanity check YAW_SV_ANGLE parameter value to avoid divide by zero
     _yaw_servo_angle_max_deg.set(constrain_float(_yaw_servo_angle_max_deg, AP_MOTORS_KES_SERVO_RANGE_DEG_MIN, AP_MOTORS_KES_SERVO_RANGE_DEG_MAX));
@@ -229,9 +232,9 @@ void AP_MotorsKestrel::output_armed_stabilizing()
 
     // _vane_left = /*vane_left_offset + (bias_dir * kes_vane_max_angle **/ safe_asin(throttle_thrust);
 
-    _vane_left = vn_l_offset + vn_l_center + (yaw_thrust * vn_l_gain);
-    _vane_fore = vn_f_offset + vn_f_center + (yaw_thrust * vn_f_gain);
-    _vane_right = vn_r_offset + vn_r_center + (yaw_thrust * vn_r_gain);
+    _vane_left = vn_l_offset + vn_l_center +  (yaw_thrust/*throttle_thrust*/ * vn_l_gain);
+    _vane_fore = vn_f_offset + vn_f_center +  (yaw_thrust/*throttle_thrust*/ * vn_f_gain);
+    _vane_right = vn_r_offset + vn_r_center + (yaw_thrust/*throttle_thrust*/ * vn_r_gain);
 
     // INCREASE TO CHECK THE LIMIT FOR ALL THREE SERVOS
     // if (fabsf(_vane_right) > radians(_yaw_servo_angle_max_deg))
@@ -337,11 +340,17 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     // compensation_gain can never be zero
     _throttle_out = throttle_thrust_best_plus_adj / compensation_gain;
 
+    if (_spool_state != SpoolState::GROUND_IDLE && _spool_state != SpoolState::SHUT_DOWN) {
+        GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "Left Pre-final: %f", _thrust_left);
+        GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "Fore Pre-final: %f", _thrust_fore);
+        GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "Right Pre-final: %f", _thrust_right);
+    }
+    
+
     // add scaled roll, pitch, constrained yaw and throttle for each motor
     _thrust_right = throttle_thrust_best_plus_adj + rpy_scale * _thrust_right;
     _thrust_left = throttle_thrust_best_plus_adj + rpy_scale * _thrust_left;
     _thrust_fore = throttle_thrust_best_plus_adj + rpy_scale * _thrust_fore;
-
 
     // NEED SOMETHING HERE
     // scale pivot thrust to account for pivot angle
@@ -395,15 +404,15 @@ void AP_MotorsKestrel::thrust_compensation(void)
     if (_thrust_compensation_callback)
     {
         // convert 3 thrust values into an array indexed by motor number
-        float thrust[4]{_thrust_right, _thrust_fore, _thrust_left, 0};
+        float thrust[4]{_thrust_left, _thrust_fore, _thrust_right, 0};
 
         // apply vehicle supplied compensation function
         _thrust_compensation_callback(thrust, 4);
 
         // extract compensated thrust values
-        _thrust_right = thrust[0];
+        _thrust_left = thrust[0];
         _thrust_fore = thrust[1];
-        _thrust_left = thrust[2];
+        _thrust_right = thrust[2];
         
     }
 }
