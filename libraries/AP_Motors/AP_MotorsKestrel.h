@@ -95,17 +95,17 @@ protected:
 
     bool _have_tail_servo = true;
 
-    float vn_l_offset = 100; //A vague arbitrary guess as to how much deflection is needed at a minimum
-    float vn_l_center = 1100; //In PWM values
-    float vn_l_gain = 50; //Multiplied by thrust (ranges from -1 to 1)
+    float vn_l_offset = 0; //A vague arbitrary guess as to how much deflection is needed at a minimum
+    float vn_l_center = 1620; //In PWM values
+    float vn_l_gain = 500; //Multiplied by thrust (ranges from -1 to 1)
 
-    float vn_f_offset = 100; //A vague arbitrary guess as to how much deflection is needed at a minimum
-    float vn_f_center = 1100; //In PWM values
-    float vn_f_gain = 50; //Multiplied by thrust (ranges from -1 to 1)
+    float vn_f_offset = 0; //A vague arbitrary guess as to how much deflection is needed at a minimum
+    float vn_f_center = 1600; //In PWM values
+    float vn_f_gain = 500; //Multiplied by thrust (ranges from -1 to 1)
 
-    float vn_r_offset = 100; //A vague arbitrary guess as to how much deflection is needed at a minimum
-    float vn_r_center = 1100; //In PWM values
-    float vn_r_gain = 50; //Multiplied by thrust (ranges from -1 to 1)
+    float vn_r_offset = 0; //A vague arbitrary guess as to how much deflection is needed at a minimum
+    float vn_r_center = 1350; //In PWM values
+    float vn_r_gain = 500; //Multiplied by thrust (ranges from -1 to 1)
 
     // Kestrel Stuff
     // AP_Int8 kes_vane_bias;

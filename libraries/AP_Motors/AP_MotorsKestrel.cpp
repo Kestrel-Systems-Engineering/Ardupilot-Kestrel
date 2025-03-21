@@ -139,18 +139,18 @@ void AP_MotorsKestrel::output_to_motors()
                 _actuator[AP_MOTORS_MOT_1 + i] = 0;
             }
         }
-        rc_write_angle(AP_MOTORS_CH_VN_1, vn_l_center);
-        rc_write_angle(AP_MOTORS_CH_VN_2, vn_f_center);
-        rc_write_angle(AP_MOTORS_CH_VN_3, vn_r_center);
+        rc_write(AP_MOTORS_CH_VN_1, vn_l_center);
+        rc_write(AP_MOTORS_CH_VN_2, vn_f_center);
+        rc_write(AP_MOTORS_CH_VN_3, vn_r_center);
         break;
     case SpoolState::GROUND_IDLE:
         // sends output to motors when armed but not flying
         set_actuator_with_slew(_actuator[AP_MOTORS_MOT_1], actuator_spin_up_to_ground_idle());
         set_actuator_with_slew(_actuator[AP_MOTORS_MOT_2], actuator_spin_up_to_ground_idle());
         set_actuator_with_slew(_actuator[AP_MOTORS_MOT_3], actuator_spin_up_to_ground_idle());
-        rc_write_angle(AP_MOTORS_CH_VN_1, vn_l_center);
-        rc_write_angle(AP_MOTORS_CH_VN_2, vn_f_center);
-        rc_write_angle(AP_MOTORS_CH_VN_3, vn_r_center);
+        rc_write(AP_MOTORS_CH_VN_1, vn_l_center);
+        rc_write(AP_MOTORS_CH_VN_2, vn_f_center);
+        rc_write(AP_MOTORS_CH_VN_3, vn_r_center);
         break;
     case SpoolState::SPOOLING_UP:
     case SpoolState::THROTTLE_UNLIMITED:
@@ -243,6 +243,27 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     //     _vane_right = constrain_float(_vane_right, -radians(_yaw_servo_angle_max_deg), radians(_yaw_servo_angle_max_deg));
     // }
 
+    if (_vane_left < 1100) {
+        _vane_left = 1100;
+    }
+    if (_vane_left > 1900) {
+        _vane_left = 1900;
+    }
+
+    if (_vane_fore < 1100) {
+        _vane_fore = 1100;
+    }
+    if (_vane_fore > 1900) {
+        _vane_fore = 1900;
+    }
+
+    if (_vane_right < 1100) {
+        _vane_right = 1100;
+    }
+    if (_vane_right > 1900) {
+        _vane_right = 1900;
+    }
+
     // float pivot_thrust_max = cosf(_vane_right);
     float thrust_max = 1.0f;
 
@@ -259,7 +280,6 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     }
 
     throttle_avg_max = constrain_float(throttle_avg_max, throttle_thrust, _throttle_thrust_max);
-
 
     // FIX ALL OF THIS 
     // The following mix may be offer less coupling between axis but needs testing
@@ -339,18 +359,18 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     const float throttle_thrust_best_plus_adj = throttle_thrust_best_rpy + thr_adj;
     // compensation_gain can never be zero
     _throttle_out = throttle_thrust_best_plus_adj / compensation_gain;
-
-    if (_spool_state != SpoolState::GROUND_IDLE && _spool_state != SpoolState::SHUT_DOWN) {
-        GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "Left Pre-final: %f", _thrust_left);
-        GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "Fore Pre-final: %f", _thrust_fore);
-        GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "Right Pre-final: %f", _thrust_right);
-    }
     
 
     // add scaled roll, pitch, constrained yaw and throttle for each motor
     _thrust_right = throttle_thrust_best_plus_adj + rpy_scale * _thrust_right;
     _thrust_left = throttle_thrust_best_plus_adj + rpy_scale * _thrust_left;
     _thrust_fore = throttle_thrust_best_plus_adj + rpy_scale * _thrust_fore;
+
+    if (_spool_state != SpoolState::GROUND_IDLE && _spool_state != SpoolState::SHUT_DOWN) {
+        GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "Left Post-final: %f", _thrust_left);
+        GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "Fore Post-final: %f", _thrust_fore);
+        GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "Right Post-final: %f", _thrust_right);
+    }
 
     // NEED SOMETHING HERE
     // scale pivot thrust to account for pivot angle
