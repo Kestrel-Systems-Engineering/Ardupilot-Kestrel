@@ -90,9 +90,9 @@ void AP_MotorsKestrel::init(motor_frame_class frame_class, motor_frame_type fram
     _has_vane_fore = SRV_Channels::function_assigned(SRV_Channel::k_motor5);
     _has_vane_left = SRV_Channels::function_assigned(SRV_Channel::k_motor6);
 
-    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_1), 1600);
-    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_2), 1600);
-    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_3), 1600);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_1), vn_l_center);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_2), vn_f_center);
+    SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_3), vn_r_center);
 
     // check for reverse tricopter
     _pitch_reversed = frame_type == MOTOR_FRAME_TYPE_PLUSREV;
@@ -264,7 +264,6 @@ void AP_MotorsKestrel::output_armed_stabilizing()
         _vane_right = 1900;
     }
 
-    // float pivot_thrust_max = cosf(_vane_right);
     float thrust_max = 1.0f;
 
     // sanity check throttle is above zero and below current limited throttle

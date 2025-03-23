@@ -100,7 +100,7 @@ protected:
     float vn_l_gain = 500; //Multiplied by thrust (ranges from -1 to 1)
 
     float vn_f_offset = 0; //A vague arbitrary guess as to how much deflection is needed at a minimum
-    float vn_f_center = 1600; //In PWM values
+    float vn_f_center = 1380; //In PWM values
     float vn_f_gain = 500; //Multiplied by thrust (ranges from -1 to 1)
 
     float vn_r_offset = 0; //A vague arbitrary guess as to how much deflection is needed at a minimum
