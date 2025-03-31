@@ -86,7 +86,7 @@ void AP_MotorsKestrel::init(motor_frame_class frame_class, motor_frame_type fram
     add_motor_num(AP_MOTORS_CH_VN_3);
 
     // Check for tail servo
-    _has_vane_right = SRV_Channels::function_assigned(SRV_Channel::k_motor4);
+    _has_vane_right = SRV_Channels::function_assigned(SRV_Channel::k_motor7);
     _has_vane_fore = SRV_Channels::function_assigned(SRV_Channel::k_motor5);
     _has_vane_left = SRV_Channels::function_assigned(SRV_Channel::k_motor6);
 
@@ -109,7 +109,7 @@ void AP_MotorsKestrel::set_frame_class_and_type(motor_frame_class frame_class, m
     // check for reverse tricopter
     _pitch_reversed = frame_type == MOTOR_FRAME_TYPE_PLUSREV;
 
-    set_initialised_ok((frame_class == MOTOR_FRAME_KESTREL) && SRV_Channels::function_assigned(SRV_Channel::k_motor5) && SRV_Channels::function_assigned(SRV_Channel::k_motor6) && SRV_Channels::function_assigned(SRV_Channel::k_motor4));
+    set_initialised_ok((frame_class == MOTOR_FRAME_KESTREL) && SRV_Channels::function_assigned(SRV_Channel::k_motor5) && SRV_Channels::function_assigned(SRV_Channel::k_motor6) && SRV_Channels::function_assigned(SRV_Channel::k_motor7));
 }
 
 // set update rate to motors - a value in hertz
@@ -209,7 +209,7 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     // SRV_Channels::set_angle(SRV_Channels::get_motor_function(AP_MOTORS_CH_VN_3), /*vane_right_offset*/ 1900);
 
     // sanity check YAW_SV_ANGLE parameter value to avoid divide by zero
-    _yaw_servo_angle_max_deg.set(constrain_float(_yaw_servo_angle_max_deg, AP_MOTORS_KES_SERVO_RANGE_DEG_MIN, AP_MOTORS_KES_SERVO_RANGE_DEG_MAX));
+    // _yaw_servo_angle_max_deg.set(constrain_float(_yaw_servo_angle_max_deg, AP_MOTORS_KES_SERVO_RANGE_DEG_MIN, AP_MOTORS_KES_SERVO_RANGE_DEG_MAX));
 
     // apply voltage and air pressure compensation
 
@@ -217,7 +217,7 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     const float compensation_gain = thr_lin.get_compensation_gain();
     roll_thrust = (_roll_in + _roll_in_ff) * compensation_gain;
     pitch_thrust = (_pitch_in + _pitch_in_ff) * compensation_gain;
-    yaw_thrust = (_yaw_in + _yaw_in_ff) * compensation_gain * sinf(radians(_yaw_servo_angle_max_deg)); // we scale this so a thrust request of 1.0f will ask for full servo deflection at full rear throttle
+    yaw_thrust = (_yaw_in + _yaw_in_ff) * compensation_gain; // we scale this so a thrust request of 1.0f will ask for full servo deflection at full rear throttle
     throttle_thrust = get_throttle() * compensation_gain;
     throttle_avg_max = _throttle_avg_max * compensation_gain;
 
@@ -280,15 +280,22 @@ void AP_MotorsKestrel::output_armed_stabilizing()
 
     throttle_avg_max = constrain_float(throttle_avg_max, throttle_thrust, _throttle_thrust_max);
 
-    // FIX ALL OF THIS 
-    // The following mix may be offer less coupling between axis but needs testing
-    //_thrust_right = roll_thrust * -0.5f + pitch_thrust * 1.0f;
-    //_thrust_left = roll_thrust * 0.5f + pitch_thrust * 1.0f;
-    //_thrust_rear = 0;
-
-    _thrust_right = roll_thrust * 0.5f + pitch_thrust * 0.25f;
-    _thrust_left = roll_thrust * -0.5f + pitch_thrust * 0.25f;
+    // Base code: A standard amount of calc balance
+    _thrust_left = roll_thrust * 0.5f + pitch_thrust * 0.25f;
     _thrust_fore = pitch_thrust * -0.5f;
+    _thrust_right = roll_thrust * -0.5f + pitch_thrust * 0.25f;
+
+    // Option 1:
+    // Drastically reduce the impact of roll on the motor input so they will try to roll less
+    // _thrust_left = roll_thrust * -0.2f + pitch_thrust * 0.25f;
+    // _thrust_fore = pitch_thrust * -0.5f;
+    // _thrust_right = roll_thrust * 0.2f + pitch_thrust * 0.25f;
+
+    // Option 2:
+    // Drastically reduce the impact of roll and pitch on the motor input so they will try to adjust less
+    // _thrust_left = roll_thrust * -0.25f + pitch_thrust * 0.125f;
+    // _thrust_fore = pitch_thrust * -0.25f;
+    // _thrust_right = roll_thrust * 0.25f + pitch_thrust * 0.125f;
 
     // calculate roll and pitch for each motor
     // set rpy_low and rpy_high to the lowest and highest values of the motors
@@ -361,15 +368,15 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     
 
     // add scaled roll, pitch, constrained yaw and throttle for each motor
-    _thrust_right = throttle_thrust_best_plus_adj + rpy_scale * _thrust_right;
     _thrust_left = throttle_thrust_best_plus_adj + rpy_scale * _thrust_left;
     _thrust_fore = throttle_thrust_best_plus_adj + rpy_scale * _thrust_fore;
+    _thrust_right = throttle_thrust_best_plus_adj + rpy_scale * _thrust_right;
 
-    if (_spool_state != SpoolState::GROUND_IDLE && _spool_state != SpoolState::SHUT_DOWN) {
-        GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "Left Post-final: %f", _thrust_left);
-        GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "Fore Post-final: %f", _thrust_fore);
-        GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "Right Post-final: %f", _thrust_right);
-    }
+    // Option 2: Subtract a linear offset from specific motors (probably the CW one) to compensate for weird takeoff behaviors
+    // float flat_offset = 100;
+    // _thrust_left = throttle_thrust_best_plus_adj - flat_offset + rpy_scale * _thrust_left;
+    // _thrust_fore = throttle_thrust_best_plus_adj + rpy_scale * _thrust_fore;
+    // _thrust_right = throttle_thrust_best_plus_adj + rpy_scale * _thrust_right;
 
     // NEED SOMETHING HERE
     // scale pivot thrust to account for pivot angle
@@ -381,6 +388,16 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     _thrust_right = constrain_float(_thrust_right, 0.0f, 1.0f);
     _thrust_left = constrain_float(_thrust_left, 0.0f, 1.0f);
     _thrust_fore = constrain_float(_thrust_fore, 0.0f, 1.0f);
+
+    // _thrust_right = constrain_float(throttle_thrust_best_plus_adj, 0.0f, 1.0f);
+    // _thrust_left = constrain_float(throttle_thrust_best_plus_adj, 0.0f, 1.0f);
+    // _thrust_fore = constrain_float(throttle_thrust_best_plus_adj, 0.0f, 1.0f);
+
+    if (_spool_state != SpoolState::GROUND_IDLE && _spool_state != SpoolState::SHUT_DOWN) {
+        GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "L: %.5f | F: %.5f | R: %.5f", _thrust_left, _thrust_fore, _thrust_right);
+        // GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "Fore Post-final: %f", _thrust_fore);
+        // GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "Right Post-final: %f", _thrust_right);
+    }
 }
 
 // output_test_seq - spin a motor at the pwm value specified

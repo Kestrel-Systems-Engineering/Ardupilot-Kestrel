@@ -7,7 +7,7 @@
 #include "AP_MotorsMulticopter.h"
 
 // vane servos use channels 5, 6, and 7
-#define AP_MOTORS_CH_VN_1   CH_4
+#define AP_MOTORS_CH_VN_1   CH_7
 #define AP_MOTORS_CH_VN_2   CH_5
 #define AP_MOTORS_CH_VN_3   CH_6
 
@@ -95,15 +95,15 @@ protected:
 
     bool _have_tail_servo = true;
 
-    float vn_l_offset = 0; //A vague arbitrary guess as to how much deflection is needed at a minimum
-    float vn_l_center = 1620; //In PWM values
+    float vn_l_offset = -250; //A vague arbitrary guess as to how much deflection is needed at a minimum
+    float vn_l_center = 1350; //In PWM values
     float vn_l_gain = 500; //Multiplied by thrust (ranges from -1 to 1)
 
-    float vn_f_offset = 0; //A vague arbitrary guess as to how much deflection is needed at a minimum
+    float vn_f_offset = -250; //A vague arbitrary guess as to how much deflection is needed at a minimum
     float vn_f_center = 1380; //In PWM values
     float vn_f_gain = 500; //Multiplied by thrust (ranges from -1 to 1)
 
-    float vn_r_offset = 0; //A vague arbitrary guess as to how much deflection is needed at a minimum
+    float vn_r_offset = -250; //A vague arbitrary guess as to how much deflection is needed at a minimum
     float vn_r_center = 1350; //In PWM values
     float vn_r_gain = 500; //Multiplied by thrust (ranges from -1 to 1)
 
