@@ -285,18 +285,6 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     _thrust_fore = pitch_thrust * -0.5f;
     _thrust_right = roll_thrust * -0.5f + pitch_thrust * 0.25f;
 
-    // Option 1:
-    // Drastically reduce the impact of roll on the motor input so they will try to roll less
-    // _thrust_left = roll_thrust * -0.2f + pitch_thrust * 0.25f;
-    // _thrust_fore = pitch_thrust * -0.5f;
-    // _thrust_right = roll_thrust * 0.2f + pitch_thrust * 0.25f;
-
-    // Option 2:
-    // Drastically reduce the impact of roll and pitch on the motor input so they will try to adjust less
-    // _thrust_left = roll_thrust * -0.25f + pitch_thrust * 0.125f;
-    // _thrust_fore = pitch_thrust * -0.25f;
-    // _thrust_right = roll_thrust * 0.25f + pitch_thrust * 0.125f;
-
     // calculate roll and pitch for each motor
     // set rpy_low and rpy_high to the lowest and highest values of the motors
 
@@ -394,7 +382,7 @@ void AP_MotorsKestrel::output_armed_stabilizing()
     // _thrust_fore = constrain_float(throttle_thrust_best_plus_adj, 0.0f, 1.0f);
 
     if (_spool_state != SpoolState::GROUND_IDLE && _spool_state != SpoolState::SHUT_DOWN) {
-        GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "L: %.5f | F: %.5f | R: %.5f", _thrust_left, _thrust_fore, _thrust_right);
+        GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "L%.3f | F%.3f | R%.3f | PT%.3f | RT%.3f", _thrust_left, _thrust_fore, _thrust_right, pitch_thrust, roll_thrust);
         // GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "Fore Post-final: %f", _thrust_fore);
         // GCS_SEND_TEXT(MAV_SEVERITY_DEBUG, "Right Post-final: %f", _thrust_right);
     }
